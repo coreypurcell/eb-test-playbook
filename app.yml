@@ -43,6 +43,9 @@
         - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: SECRET_KEY_BASE
           Value: 0e2efd5bafccc325d572ff620674cded47e4d95ac6706897672cb5d43d1232b2235e910479dedb35f01047bd4e65640fdf8dacadf8aaa72c76114f238459cc1c
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: STACK_NAME
+          Value: STAGING_EB
         - Namespace: aws:ec2:vpc
           OptionName: VPCId
           Value: "{{vpc_id}}"
@@ -60,10 +63,10 @@
           Value: "true"
         - Namespace: aws:autoscaling:launchconfiguration
           OptionName: SecurityGroups
-          Value: "sg-55e2c62c"
+          Value: "sg-4d4ccb36"
         - Namespace: aws:elb:loadbalancer
           OptionName: SecurityGroups
-          Value: "sg-55e2c62c"
+          Value: "sg-4d4ccb36"
         - Namespace: aws:elb:loadbalancer
           OptionName: CrossZone
           Value: "false"
