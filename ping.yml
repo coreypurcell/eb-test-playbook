@@ -1,0 +1,8 @@
+---
+- hosts: '*asg*'
+  remote_user: deploy
+
+  tasks:
+    - name: ping the tag
+      ping:
+

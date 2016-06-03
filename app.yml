@@ -1,0 +1,107 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars_files:
+    - staging_vpc_info
+
+  vars:
+    #your region
+    region: us-east-1
+    #your ip address
+    allowed_ip: 0.0.0.0/0
+    #prefix for naming
+    prefix: staging
+    vpc_id: "{{ staging_vpc }}"
+    private_subnet: 10.0.1.0/24
+    stacks:
+      - { stack_name: "staging" }
+      # - { stack_name: "test" }
+
+  roles:
+    - hsingh.elastic_beanstalk
+
+  tasks:
+
+  - name: Create Elastic Beanstalk application
+    elasticbeanstalk_app:
+      region: us-east-1
+      app_name: Atom
+      state: present
+    register: app
+
+  - name: Create App Environment
+    elasticbeanstalk_env:
+      region: "{{ region }}"
+      app_name: Atom
+      env_name: "{{item.stack_name}}"
+      # version_label: Sample Application
+      solution_stack_name: "64bit Amazon Linux 2015.09 v2.0.6 running Ruby 2.2 (Puma)"
+      # instance profile
+      option_settings:
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: SECRET_KEY_BASE
+          Value: 0e2efd5bafccc325d572ff620674cded47e4d95ac6706897672cb5d43d1232b2235e910479dedb35f01047bd4e65640fdf8dacadf8aaa72c76114f238459cc1c
+        - Namespace: aws:ec2:vpc
+          OptionName: VPCId
+          Value: "{{vpc_id}}"
+        - Namespace: aws:ec2:vpc
+          OptionName: Subnets
+          Value: "{{staging_subnet_public_0}}"
+        - Namespace: aws:ec2:vpc
+          OptionName: ELBSubnets
+          Value: "{{staging_subnet_public_0}}"
+        - Namespace: aws:ec2:vpc
+          OptionName: DBSubnets
+          Value: "{{staging_subnet_private_0}}"
+        - Namespace: aws:ec2:vpc
+          OptionName: AssociatePublicIpAddress
+          Value: "true"
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: SecurityGroups
+          Value: "sg-55e2c62c"
+        - Namespace: aws:elb:loadbalancer
+          OptionName: SecurityGroups
+          Value: "sg-55e2c62c"
+        - Namespace: aws:elb:loadbalancer
+          OptionName: CrossZone
+          Value: "false"
+        - Namespace: aws:elasticbeanstalk:command
+          OptionName: DeploymentPolicy
+          Value: "Rolling"
+        - Namespace: aws:elasticbeanstalk:command
+          OptionName: BatchSizeType
+          Value: "Percentage"
+        - Namespace: aws:elasticbeanstalk:command
+          OptionName: BatchSize
+          Value: 30
+        - Namespace: aws:autoscaling:updatepolicy:rollingupdate
+          OptionName: MaxBatchSize
+          Value: 5
+        - Namespace: aws:autoscaling:updatepolicy:rollingupdate
+          OptionName: MinInstancesInService
+          Value: 1
+        - Namespace: aws:autoscaling:updatepolicy:rollingupdate
+          OptionName: RollingUpdateEnabled
+          Value: true
+        - Namespace: aws:autoscaling:updatepolicy:rollingupdate
+          OptionName: RollingUpdateType
+          Value: Health
+        - Namespace: aws:autoscaling:updatepolicy:rollingupdate
+          OptionName: PauseTime
+          Value: "PT1M30S"
+    register: env
+    with_items: stacks
+
+
+# - hosts: "tag_elasticbeanstalk_environment_name_{{env.invocation.module_complex_args.env_name}}"
+#   connection: local
+#   gather_facts: False
+
+#   tasks:
+#   - name: Tag instances with the env name
+#     ec2_tag:
+#       tags:
+#         stack_name: "{{env.invocation.module_complex_args.env_name}}"
+
